@@ -82,5 +82,28 @@ platform :ios do
     upload_to_testflight(api_key: key, ipa: "build/Brisa.ipa", skip_waiting_for_build_processing: true,
                          distribute_external: false)
     UI.success("Subida la compilación #{build} a TestFlight (procesa en ~10-20 min)")
+    probadores
+  end
+
+  desc "Grupo interno «Yo» (ve todas las compilaciones) con el titular de la cuenta como probador. Nunca rompe la compilación."
+  lane :probadores do
+    begin
+      asc_key
+      app = Spaceship::ConnectAPI::App.find(BUNDLE_ID)
+      UI.user_error!("La app no existe en App Store Connect") if app.nil?
+      grupo = app.get_beta_groups.find { |g| g.is_internal_group && g.name == "Yo" }
+      grupo ||= app.create_beta_group(group_name: "Yo", is_internal_group: true, has_access_to_all_builds: true)
+      dueno = Spaceship::ConnectAPI::User.all.find { |u| Array(u.roles).include?("ACCOUNT_HOLDER") }
+      UI.user_error!("No encontré al titular de la cuenta") if dueno.nil?
+      begin
+        Spaceship::ConnectAPI.post_beta_tester_assignment(beta_group_ids: [grupo.id],
+          attributes: { email: dueno.email, firstName: dueno.first_name, lastName: dueno.last_name })
+        UI.success("Titular agregado como probador interno del grupo «Yo»")
+      rescue => e
+        UI.important("Probador: #{e.message.to_s[0, 300]} (si ya estaba en el grupo, no pasa nada)")
+      end
+    rescue => e
+      UI.important("No pude preparar el grupo de TestFlight: #{e.message.to_s[0, 300]}. Hazlo a mano: App Store Connect → Brisa → TestFlight → Pruebas internas → + → «Yo» → agrégate.")
+    end
   end
 end

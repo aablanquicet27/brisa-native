@@ -9,8 +9,10 @@ cuando vuelva la red.
 
 ## Android
 
-1. En el teléfono, abre GitHub (sesión iniciada con aablanquicet27) → repositorio **brisa-app** → **Releases**.
-2. Toca el más reciente (**Brisa Android N**) y descarga el archivo **Brisa-N.apk**.
+1. En el teléfono, abre este enlace (no hace falta iniciar sesión en GitHub):
+   **https://github.com/aablanquicet27/brisa-native/releases/latest/download/Brisa.apk**
+   (todas las versiones: github.com/aablanquicet27/brisa-native/releases).
+2. Se descarga **Brisa.apk**.
 3. Ábrelo desde la notificación de descarga. La primera vez Android pregunta si permites instalar apps
    de Chrome (o del navegador que uses): **Configuración → Permitir de esta fuente** → atrás → **Instalar**.
 4. Abre **Brisa** desde el ícono y entra con tu correo y contraseña (la sesión queda guardada).
@@ -30,7 +32,7 @@ Antes, una sola vez, en el computador:
    idioma Español (México), ID de paquete **com.aablanquicet.brisa**, SKU **brisa001**, acceso completo.
    (Si el ID de paquete no aparece en la lista, primero corre el flujo «iOS (TestFlight)» en GitHub una vez:
    él lo registra.)
-3. En GitHub → brisa-app → **Actions → iOS (TestFlight) → Run workflow**. Tarda ~20 min.
+3. En GitHub → **brisa-native** → **Actions → iOS (TestFlight) → Run workflow**. Tarda ~20 min.
 
 En el iPhone:
 
@@ -49,6 +51,7 @@ En el iPhone:
 
 ## Para mantenimiento (técnico)
 
+- Las compilaciones corren en el repo público **aablanquicet27/brisa-native** (solo `native/` y los workflows; Actions de los repos privados de la cuenta no arranca).
 - `native/` es un proyecto Capacitor 8. `ios/` y `android/` NO se guardan: se generan en GitHub Actions
   (`npm run platform:android|ios`) y `scripts/patch-platforms.mjs` les pone permisos y versión.
 - Íconos y arranque: `node native/scripts/assets.mjs` (genera `resources/`; en CI `@capacitor/assets` saca los tamaños).
