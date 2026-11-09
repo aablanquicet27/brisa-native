@@ -27,7 +27,7 @@ const config: CapacitorConfig = {
   },
   plugins: {
     // iOS: el webview se achica con el teclado (la píldora queda justo encima) y sin la barra ⌃⌄✓
-    Keyboard: { resize: 'native', style: 'DARK', resizeOnFullScreen: true },
+    Keyboard: { resize: 'none', style: 'DARK', resizeOnFullScreen: true },
     StatusBar: { overlaysWebView: true, style: 'DARK', backgroundColor: '#1b2140' },
     SystemBars: { insetsHandling: 'css', style: 'DARK', initialViewportFitValueHint: 'cover' },
     SplashScreen: {
