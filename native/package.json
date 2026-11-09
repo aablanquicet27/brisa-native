@@ -1,0 +1,28 @@
+{
+  "name": "brisa-native",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Cascarón nativo (Capacitor) de Brisa para iOS y Android. Las plataformas se generan en CI.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "platform:android": "npx cap add android && npx @capacitor/assets generate --android --assetPath resources --iconBackgroundColor '#1b2140' --iconBackgroundColorDark '#1b2140' --splashBackgroundColor '#1b2140' --splashBackgroundColorDark '#1b2140' && node scripts/patch-platforms.mjs android && npx cap sync android",
+    "platform:ios": "npx cap add ios && npx @capacitor/assets generate --ios --assetPath resources --iconBackgroundColor '#1b2140' --iconBackgroundColorDark '#1b2140' --splashBackgroundColor '#1b2140' --splashBackgroundColorDark '#1b2140' && node scripts/patch-platforms.mjs ios && npx cap sync ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/ios": "^8.6.0",
+    "@capacitor/keyboard": "^8.0.6",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.4"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^4.0.0",
+    "@capacitor/cli": "^8.6.0",
+    "typescript": "^5.6.0"
+  }
+}

@@ -1,0 +1,86 @@
+# Brisa para iPhone: compila y sube a TestFlight con la llave de App Store Connect (sin Apple ID ni 2FA).
+# Variables (secretos de GitHub): ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8, MATCH_PASSWORD, MATCH_GIT_URL; BUILD_NUMBER.
+default_platform(:ios)
+
+BUNDLE_ID = "com.aablanquicet.brisa"
+APP_NAME = "Brisa"
+SKU = "brisa001"
+
+platform :ios do
+  def asc_key
+    %w[ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8].each do |k|
+      UI.user_error!("Falta la llave de Apple (#{k}). Súbela con el formulario y vuelve a correr.") if ENV[k].to_s.strip.empty?
+    end
+    app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"].strip,
+      issuer_id: ENV["ASC_ISSUER_ID"].strip,
+      key_content: ENV["ASC_KEY_P8"],
+      is_key_content_base64: false,
+      duration: 1200,
+      in_house: false
+    )
+  end
+
+  desc "Registra el bundle id y verifica que exista la app en App Store Connect"
+  lane :app_record do
+    asc_key
+    # El identificador de la app (portal de desarrolladores) sí se puede crear con la llave (lo mismo que hace
+    # `produce --skip_itc`, pero directo con la API para no depender de Apple ID)
+    begin
+      bid = Spaceship::ConnectAPI::BundleId.find(BUNDLE_ID)
+    rescue => e
+      if e.message.to_s =~ /PLA|agreement|acuerdo/i
+        UI.user_error!("Apple pide aceptar el acuerdo actualizado del programa de desarrolladores: entra a developer.apple.com/account " \
+                       "con tu Apple ID (titular de la cuenta), acepta el aviso «Program License Agreement» y vuelve a correr.")
+      end
+      raise
+    end
+    if bid.nil?
+      Spaceship::ConnectAPI::BundleId.create(name: APP_NAME, platform: "IOS", identifier: BUNDLE_ID)
+      UI.success("Creado el identificador #{BUNDLE_ID}")
+    else
+      UI.message("El identificador #{BUNDLE_ID} ya existe")
+    end
+    # El registro en App Store Connect: Apple no permite crearlo con la llave de API; si falta, se avisa claro.
+    app = Spaceship::ConnectAPI::App.find(BUNDLE_ID)
+    if app.nil?
+      UI.user_error!("Falta crear la app en App Store Connect (una sola vez, 1 minuto): appstoreconnect.apple.com → Apps → + → Nueva app → " \
+                     "iOS, nombre «#{APP_NAME}», idioma Español (México), ID de paquete #{BUNDLE_ID}, SKU #{SKU}, acceso completo. Luego vuelve a correr.")
+    end
+    UI.success("App en App Store Connect: #{app.name} (#{app.id})")
+  end
+
+  desc "Compila y sube a TestFlight (solo prueba interna)"
+  lane :beta do
+    key = asc_key
+    setup_ci # llavero temporal en el runner
+    app_record
+
+    match(type: "appstore", app_identifier: BUNDLE_ID, api_key: key, readonly: false,
+          git_url: ENV["MATCH_GIT_URL"], git_branch: "main", storage_mode: "git")
+    team_id = ENV["sigh_#{BUNDLE_ID}_appstore_team-id"]
+    profile = ENV["sigh_#{BUNDLE_ID}_appstore_profile-name"]
+
+    xcodeproj = "ios/App/App.xcodeproj"
+    workspace = "ios/App/App.xcworkspace"
+    update_code_signing_settings(path: xcodeproj, targets: ["App"], use_automatic_signing: false,
+                                 team_id: team_id, profile_name: profile, code_sign_identity: "Apple Distribution",
+                                 bundle_identifier: BUNDLE_ID)
+
+    build = (ENV["BUILD_NUMBER"] || "1").to_s
+    increment_build_number(xcodeproj: xcodeproj, build_number: build)
+
+    common = { scheme: "App", configuration: "Release", export_method: "app-store", output_directory: "build",
+               output_name: "Brisa.ipa", clean: true,
+               export_options: { provisioningProfiles: { BUNDLE_ID => profile }, teamID: team_id } }
+    if File.exist?(workspace)
+      build_app(common.merge(workspace: workspace))
+    else
+      build_app(common.merge(project: xcodeproj))
+    end
+
+    upload_to_testflight(api_key: key, ipa: "build/Brisa.ipa", skip_waiting_for_build_processing: true,
+                         distribute_external: false)
+    UI.success("Subida la compilación #{build} a TestFlight (procesa en ~10-20 min)")
+  end
+end

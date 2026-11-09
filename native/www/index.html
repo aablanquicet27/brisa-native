@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Brisa</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden}
+  body{background:linear-gradient(180deg,#1b2140 0%,#2a2f55 62%,#363c68 100%);color:rgba(255,255,255,.92);
+    font:400 15px/1.45 -apple-system,system-ui,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased;
+    display:grid;place-items:center;padding:env(safe-area-inset-top) 24px env(safe-area-inset-bottom)}
+  main{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+  svg{width:44px;height:44px}
+  h1{font-weight:600;font-size:17px;letter-spacing:-.02em}
+  p{color:rgba(255,255,255,.55);font-size:14px}
+  .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#7fe0c2;margin-right:8px;vertical-align:1px;animation:b 1.6s ease-in-out infinite}
+  @keyframes b{50%{opacity:.25}}
+  button{margin-top:8px;font:inherit;font-weight:500;color:#151a33;background:#fff;border:0;border-radius:99px;padding:11px 22px;-webkit-tap-highlight-color:transparent}
+  @media (prefers-reduced-motion:reduce){.dot{animation:none}}
+</style>
+</head>
+<body>
+<main>
+  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#fff"/><path d="M6.5 13.2c1.8-1.7 3.7-1.7 5.5 0s3.7 1.7 5.5 0" fill="none" stroke="#1b2140" stroke-width="1.7" stroke-linecap="round"/></svg>
+  <h1>Brisa</h1>
+  <p><span class="dot"></span><span id="st">Sin conexión — reintentando</span></p>
+  <button id="r" type="button">Reintentar ahora</button>
+</main>
+<script>
+  // Si Brisa no carga (sin red o servidor caído), Capacitor muestra esta página. Se reintenta sola.
+  var URL_BRISA = 'https://ip-172-31-29-16.tail02876e.ts.net/';
+  var st = document.getElementById('st'), wait = 3000, busy = false;
+  try { window.Capacitor && Capacitor.nativePromise && Capacitor.nativePromise('SplashScreen', 'hide', {}).catch(function () {}); } catch (e) {}
+  function go() { location.replace(URL_BRISA); }
+  function probe() {
+    if (busy) return; busy = true;
+    st.textContent = 'Conectando…';
+    var done = false, t = setTimeout(function () { if (!done) { done = true; fail(); } }, 6000);
+    // no-cors: solo importa que el servidor responda
+    fetch(URL_BRISA + 'manifest.webmanifest?t=' + Date.now(), { mode: 'no-cors', cache: 'no-store' })
+      .then(function () { if (!done) { done = true; clearTimeout(t); go(); } })
+      .catch(function () { if (!done) { done = true; clearTimeout(t); fail(); } });
+  }
+  function fail() {
+    busy = false; st.textContent = 'Sin conexión — reintentando';
+    wait = Math.min(wait * 1.6, 20000); setTimeout(probe, wait);
+  }
+  document.getElementById('r').onclick = function () { wait = 3000; probe(); };
+  window.addEventListener('online', function () { wait = 3000; probe(); });
+  setTimeout(probe, wait);
+</script>
+</body>
+</html>

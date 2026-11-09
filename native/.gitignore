@@ -1,0 +1,11 @@
+node_modules/
+ios/
+android/
+fastlane/report.xml
+fastlane/README.md
+*.ipa
+*.apk
+*.p12
+*.keystore
+*.jks
+*.p8
