@@ -90,6 +90,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="android-v${{ github.run_number }}"
-          gh release create "$TAG" "Brisa-${{ github.run_number }}.apk" --prerelease --target "${{ github.sha }}" \
+          cp "Brisa-${{ github.run_number }}.apk" Brisa.apk
+          gh release create "$TAG" "Brisa-${{ github.run_number }}.apk" Brisa.apk --latest --target "${{ github.sha }}" \
             --title "Brisa Android ${{ github.run_number }}" \
-            --notes "APK de Brisa para Android (compilación ${{ github.run_number }}). Descárgalo desde el teléfono e instálalo; ver native/LEEME.md."
+            --notes "APK de Brisa para Android (compilación ${{ github.run_number }}). Descárgalo desde el teléfono e instálalo; ver native/LEEME.md. Enlace fijo a la última: https://github.com/${{ github.repository }}/releases/latest/download/Brisa.apk"
